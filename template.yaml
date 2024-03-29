@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  MyMovieBotStack
+
+  Sample SAM Template for MyMovieBotStack
+
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 512
+
+Resources:
+  MyImagesBucket:
+    Type: AWS::S3::Bucket
+
+  WebhooksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: webhooks.lambda_handler
+      Runtime: ruby3.2
+      Architectures:
+        - arm64
+      FunctionUrlConfig:
+        AuthType: NONE
+      Environment:
+        Variables:
+          IMAGES_BUCKET: !Ref MyImagesBucket
+          MOVIE_DB_TOKEN: [TOKEN_DB]
+          TG_TOKEN: [TOKEN_TG]
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+              Resource: !Sub
+                - ${BucketArn}/*
+                - { BucketArn: !GetAtt MyImagesBucket.Arn }
+
+Outputs:
+  webhooksURL:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !GetAtt WebhooksFunctionUrl.FunctionUrl
